@@ -1,0 +1,43 @@
+pip install telegram bot 
+8491800723:AAGa9k1lEm-ZFPyfeceQYArsM9b0UEm38nc
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+import sqlite3
+import random
+import datetime
+
+TOKEN = "ضع_التوكن_هنا"
+
+# --- إعداد قاعدة البيانات SQLite ---
+conn = sqlite3.connect('football_bot.db', check_same_thread=False)
+cursor = conn.cursor()
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS players (
+    chat_id INTEGER PRIMARY KEY,
+    name TEXT,
+    team TEXT,
+    points INTEGER,
+    last_play DATE
+)
+''')
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS weekly_rewards (
+    week_start DATE PRIMARY KEY,
+    rewarded TEXT
+)
+''')
+conn.commit()
+
+# --- وظائف قاعدة البيانات ---
+def add_or_get_player(chat_id, name):
+    cursor.execute("SELECT * FROM players WHERE chat_id=?", (chat_id,))
+    player = cursor.fetchone()
+    if not player:
+        cursor.execute("INSERT INTO players VALUES (?, ?, ?, ?, ?)", (chat_id, name, None, 0, None))
+        conn.commit()
+        return {"chat_id": chat_id, "name": name, "team": None, "points": 0}
+    else:
+        return {"chat_id": player[0], "name": player[1], "team": player[2], "points": player[3]}
+
+def set_team(chat_id, team):
+    cursor.execute("UPDATE players SET team=? WHERE chat_id=?", (team, chat_
